@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	UserNotFound = NewAppError(ErrorTypeUser, ApplicationName, ServiceName, "user", "not_found", "User Not Found", http.StatusNotFound)
+	UserNotFound = NewAppError(ErrorTypeUser, ApplicationName, ServiceName, "user", "not_found", "User Not Found", http.StatusNotFound, "not found user error example")
 )
 
 type AppError struct {
@@ -23,7 +23,7 @@ type AppError struct {
 	Cause       error
 }
 
-func NewAppError(errType ErrorType, application, service, module, code, title string, httpStatus int) *AppError {
+func NewAppError(errType ErrorType, application, service, module, code, title string, httpStatus int, message string) *AppError {
 	return &AppError{
 		Type:        errType,
 		Application: application,
@@ -32,17 +32,15 @@ func NewAppError(errType ErrorType, application, service, module, code, title st
 		Code:        code,
 		Title:       title,
 		HTTPStatus:  httpStatus,
+		Message:     message,
 	}
 }
 
 func (e *AppError) SetMsg(msg string) *AppError {
-	e.Message = msg
-	return e
+	appError := NewAppError(e.Type, e.Application, e.Service, e.Module, e.Code, e.Title, e.HTTPStatus, e.Message)
+	appError.Message = msg
+	return appError
 }
-
-//func NewError(code ErrorCode, msg string) *AppError {
-//	return &AppError{Code: code, Message: msg}
-//}
 
 //func WrapError(code ErrorCode, msg string, cause error) *AppError {
 //	if cause == nil {
