@@ -10,7 +10,7 @@ const (
 // user errors
 var (
 	FunctionNotFound = NewErrorCode(ErrorTypeUser, ApplicationName, ServiceName, "function", "not_found", "Function Not Found", http.StatusNotFound)
-	UserNotFound     = NewErrorCode(ErrorTypeUser, ApplicationName, ServiceName, "user", "not_found", "User Not Found", http.StatusNotFound)
+	//UserNotFound     = NewErrorCode(ErrorTypeUser, ApplicationName, ServiceName, "user", "not_found", "User Not Found", http.StatusNotFound)
 )
 
 // biz errors
