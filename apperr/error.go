@@ -11,13 +11,13 @@ type AppError struct {
 	Cause   error
 }
 
-func NewError(code ErrorCode, msg string) *AppError {
+func New(code ErrorCode, msg string) *AppError {
 	return &AppError{Code: code, Message: msg}
 }
 
-func WrapError(code ErrorCode, msg string, cause error) *AppError {
+func Wrap(code ErrorCode, msg string, cause error) *AppError {
 	if cause == nil {
-		return NewError(code, msg)
+		return New(code, msg)
 	}
 	return &AppError{Code: code, Message: msg, Cause: cause}
 }
@@ -61,4 +61,26 @@ func IsType(err error, target ErrorType) bool {
 
 func (e *AppError) IsType(target ErrorType) bool {
 	return e != nil && e.Code.Type == target
+}
+
+func (e *AppError) WithMessage(msg string) *AppError {
+	if e == nil {
+		return nil
+	}
+	return &AppError{
+		Code:    e.Code,
+		Message: msg,
+		Cause:   e.Cause,
+	}
+}
+
+func (e *AppError) WithCause(cause error) *AppError {
+	if e == nil {
+		return nil
+	}
+	return &AppError{
+		Code:    e.Code,
+		Message: cause.Error(),
+		Cause:   cause,
+	}
 }

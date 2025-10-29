@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"lion-golang/apperr"
+	"net/http"
 )
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
@@ -23,24 +24,24 @@ func main() {
 
 	var returnedError error
 
-	newError := apperr.NewError(apperr.UserNotFound, "user not found error example")
+	newError := apperr.New(apperr.UserNotFound, "user not found error example")
 	if newError != nil {
 		fmt.Println("Error occurred:", newError.Error())
-		returnedError = apperr.WrapError(apperr.ResourceNotFound, "wrapping error example", newError)
+		returnedError = apperr.Wrap(apperr.ResourceNotFound, "wrapping error example", newError)
 	}
 	if returnedError != nil {
 		fmt.Println("Returned Error:", returnedError.Error())
 	}
-	stardardError := errors.New("a standard error")
+	standardError := errors.New("a standard error")
 	if appErr, ok := apperr.As(returnedError); ok {
 		fmt.Println("AppError Code:", appErr.Code.CodeString())
 	}
 
 	// errors.as
-	if appErr, ok := apperr.As(stardardError); ok {
+	if appErr, ok := apperr.As(standardError); ok {
 		fmt.Println("AppError Code:", appErr.Code.CodeString())
 	} else {
-		fmt.Println("stardardError is not an AppError")
+		fmt.Println("standardError is not an AppError")
 	}
 
 	// errors.is
@@ -48,6 +49,52 @@ func main() {
 		fmt.Println("returnedError is an AppError")
 	}
 
-	println(apperr.IsType(returnedError, apperr.ErrorTypeUser))
-	println(apperr.IsType(returnedError, apperr.ErrorTypeBiz))
+	fmt.Println(apperr.IsType(returnedError, apperr.ErrorTypeUser))
+	fmt.Println(apperr.IsType(returnedError, apperr.ErrorTypeBiz))
+
+	messageError := NotFound.WithMessage("XXX not found")
+	if messageError != nil {
+		fmt.Println("Message Error:", messageError.Error())
+	}
+}
+
+const (
+	ApplicationName = "hive"
+	ServiceName     = "orchestration"
+)
+
+var (
+	CommonBadRequestErrorCode         = newUserErrorCode("common", "bad_request", "Bad Request", http.StatusBadRequest)
+	CommonNotFoundErrorCode           = newUserErrorCode("common", "not_found", "Resource Not Found", http.StatusNotFound)
+	CommonInternalErrorCode           = newSystemErrorCode("common", "internal_error", "Internal Server Error", http.StatusInternalServerError)
+	CommonUnauthorizedErrorCode       = newUserErrorCode("common", "unauthorized", "Unauthorized", http.StatusUnauthorized)
+	CommonForbiddenErrorCode          = newUserErrorCode("common", "forbidden", "Forbidden", http.StatusForbidden)
+	CommonUnknownErrorCode            = newSystemErrorCode("common", "unknown", "Unknown Error", http.StatusInternalServerError)
+	CommonServiceUnavailableErrorCode = newThirdPartyErrorCode("common", "unavailable", "Service Unavailable", http.StatusServiceUnavailable)
+)
+
+var (
+	NotFound     = apperr.New(CommonNotFoundErrorCode, "resource not found")
+	Internal     = apperr.New(CommonInternalErrorCode, "internal server error")
+	BadRequest   = apperr.New(CommonBadRequestErrorCode, "bad request")
+	Unauthorized = apperr.New(CommonUnauthorizedErrorCode, "unauthorized")
+	Forbidden    = apperr.New(CommonForbiddenErrorCode, "forbidden")
+	Unavailable  = apperr.New(CommonServiceUnavailableErrorCode, "service unavailable")
+	Unknown      = apperr.New(CommonUnknownErrorCode, "unknown error")
+)
+
+func newUserErrorCode(module, code, title string, httpStatus int) apperr.ErrorCode {
+	return apperr.NewErrorCode(apperr.ErrorTypeUser, ApplicationName, ServiceName, module, code, title, httpStatus)
+}
+
+func newBizErrorCode(module, code, title string, httpStatus int) apperr.ErrorCode {
+	return apperr.NewErrorCode(apperr.ErrorTypeBiz, ApplicationName, ServiceName, module, code, title, httpStatus)
+}
+
+func newSystemErrorCode(module, code, title string, httpStatus int) apperr.ErrorCode {
+	return apperr.NewErrorCode(apperr.ErrorTypeSystem, ApplicationName, ServiceName, module, code, title, httpStatus)
+}
+
+func newThirdPartyErrorCode(module, code, title string, httpStatus int) apperr.ErrorCode {
+	return apperr.NewErrorCode(apperr.ErrorTypeThirdParty, ApplicationName, ServiceName, module, code, title, httpStatus)
 }
