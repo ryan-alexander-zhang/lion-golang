@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"lion-golang/apperr"
 )
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
@@ -18,4 +20,34 @@ func main() {
 		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
 		fmt.Println("i =", 100/i)
 	}
+
+	var returnedError error
+
+	newError := apperr.NewError(apperr.UserNotFound, "user not found error example")
+	if newError != nil {
+		fmt.Println("Error occurred:", newError.Error())
+		returnedError = apperr.WrapError(apperr.ResourceNotFound, "wrapping error example", newError)
+	}
+	if returnedError != nil {
+		fmt.Println("Returned Error:", returnedError.Error())
+	}
+	stardardError := errors.New("a standard error")
+	if appErr, ok := apperr.As(returnedError); ok {
+		fmt.Println("AppError Code:", appErr.Code.CodeString())
+	}
+
+	// errors.as
+	if appErr, ok := apperr.As(stardardError); ok {
+		fmt.Println("AppError Code:", appErr.Code.CodeString())
+	} else {
+		fmt.Println("stardardError is not an AppError")
+	}
+
+	// errors.is
+	if errors.Is(returnedError, newError) {
+		fmt.Println("returnedError is an AppError")
+	}
+
+	println(apperr.IsType(returnedError, apperr.ErrorTypeUser))
+	println(apperr.IsType(returnedError, apperr.ErrorTypeBiz))
 }
