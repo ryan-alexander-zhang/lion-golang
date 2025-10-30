@@ -1,4 +1,4 @@
-package apperr
+package error
 
 import (
 	"errors"
