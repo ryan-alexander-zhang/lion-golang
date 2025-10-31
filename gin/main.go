@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"lion-golang/logger"
 	"log"
@@ -50,6 +51,7 @@ func main() {
 	r.Use(addTraceMiddleware(appLogger))
 	r.Use(addTraceResponseMiddleware())
 	r.Use(logRequestMiddleware(appLogger))
+	r.Use(errorHandlerMiddleware())
 
 	// Logs all panic to error log
 	//   - stack means whether output the stack info.
@@ -73,6 +75,12 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "on",
 		})
+	})
+
+	r.GET("/error", func(c *gin.Context) {
+		// Return JSON response
+		c.Error(errors.New("error"))
+		return
 	})
 
 	// Start server on port 8080 (default)
@@ -189,4 +197,26 @@ func initOTel() func(context.Context) error {
 		propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}),
 	)
 	return tp.Shutdown
+}
+
+// ErrorHandler captures errors and returns a consistent JSON error response
+func errorHandlerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next() // Step1: Process the request first.
+
+		// Step2: Check if any errors were added to the context
+		if len(c.Errors) > 0 {
+			// Step3: Use the last error
+			err := c.Errors.Last().Err
+
+			// Step4: Respond with a generic error message
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success":    false,
+				"errCode":    "InternalServerError",
+				"errMessage": err.Error(),
+			})
+		}
+
+		// Any other steps if no errors are found
+	}
 }
